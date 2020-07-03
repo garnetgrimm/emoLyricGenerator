@@ -79,8 +79,8 @@ def writeSong(baseSong):
                         sub = possible_subs[sub_idx]
                     #punctuation is hard
                     if "'" in sub:
-                        #start_offset = ""
-                        sub = token.text
+                        start_offset = ""
+                        #sub = token.text
                     if "," in token.text or  '"' in token.text:
                         start_offset = ""
                     #if a line is repeated in a song I wanted it to be repeated here too
