@@ -6,7 +6,7 @@ import glob
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('mode', help='The operating modes for lyricHelper are: download, train, write')
-parser.add_argument('--api_key', help='API key for genius lyrics, used only in download mode ( https://genius.com/api-clients )')
+parser.add_argument('--api_token', help='API key for genius lyrics, used only in download mode ( https://genius.com/api-clients )')
 parser.add_argument('--download_list', help='Location of song download list, defaults to downloadList.txt')
 parser.add_argument('--download_dir', help='Where to place/find downloaded songs, defaults to lyrics/')
 parser.add_argument('--wordbank_dir', help='Where to place/find learned words, defaults to word_bank.json')
@@ -29,7 +29,7 @@ def getSongFromWeb(search_term):
     _URL_SEARCH = "search?q="
     querystring = _URL_API + _URL_SEARCH + urllib2.quote(search_term)
     request = urllib2.Request(querystring)
-    client_access_token = args.api_key
+    client_access_token = args.api_token
     request.add_header("Authorization", "Bearer " + client_access_token)
     request.add_header("User-Agent", "")
     response = urllib2.urlopen(request, timeout=3)
@@ -109,13 +109,16 @@ if __name__ == "__main__":
         songs_to_learn = glob.glob(args.download_dir + "/*")
         song_idx = random.randrange(len(songs_to_learn))
         args.base_song = songs_to_learn[song_idx]
-    if(args.api_key == None):
-        args.api_key = ""
+    if(args.api_token == None):
+        args.api_token = ""
 
     if(mode == "download"):
-        if(args.api_key == ""):
-            print("GENERATE API KEY FROM https://genius.com/api-clients OR YOU WILL HAVE A BAD TIME")
+        if(args.api_token == ""):
+            print("GENERATE API CLIENT TOKEN FROM https://genius.com/api-clients OR YOU WILL HAVE A BAD TIME")
+            print("pass via --api_token. Run ./lyricHelper for more options")
             exit()
+        else:
+            print("api_token: " + args.api_token)
         with open(args.download_list) as file:
             for song in file:
                 getSongFromWeb(song)
