@@ -5,7 +5,7 @@ import glob
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('mode', help='The operating modes for lyricHelper are: download, train, write')
+parser.add_argument('mode', help='The operating modes for lyricHelper are: download, list, train, write')
 parser.add_argument('--api_token', help='API key for genius lyrics, used only in download mode ( https://genius.com/api-clients )')
 parser.add_argument('--download_list', help='Location of song download list, defaults to downloadList.txt')
 parser.add_argument('--download_dir', help='Where to place/find downloaded songs, defaults to lyrics/')
@@ -52,12 +52,14 @@ def learnWords(files):
                 sentance = line.strip()
                 doc = nlp(sentance)
                 for i in range(0, len(doc)):
+                    if(token.text.strip().lower() == "chorus" or token.text.strip().lower() == "verse"):
+                        continue
                     token = doc[i]
                     if token.tag_ not in word_bank.keys():
                         word_bank[token.tag_] = dict()
                     if token.dep_ not in word_bank[token.tag_].keys():
                        word_bank[token.tag_][token.dep_] = []
-                    word_bank[token.tag_][token.dep_].append(token.text)
+                    word_bank[token.tag_][token.dep_].append(token.text.lower())
 
 def writeSong(baseSong):
     print("BASED ON: " + baseSong)
@@ -68,7 +70,7 @@ def writeSong(baseSong):
             sentance = line.strip()
             doc = nlp(sentance)
             for token in doc:
-                sub = token.text + "[]"
+                sub = token.text
                 start_offset = " "
                 if token.tag_ in word_bank.keys():
                     if token.dep_ in word_bank[token.tag_].keys():
@@ -76,7 +78,10 @@ def writeSong(baseSong):
                         sub_idx = random.randrange(len(possible_subs))
                         sub = possible_subs[sub_idx]
                     #punctuation is hard
-                    if "'" in token.text:
+                    if "'" in sub:
+                        #start_offset = ""
+                        sub = token.text
+                    if "," in token.text or  '"' in token.text:
                         start_offset = ""
                     #if a line is repeated in a song I wanted it to be repeated here too
                     if(token.text in written_lyrics.keys()):
@@ -112,7 +117,10 @@ if __name__ == "__main__":
     if(args.api_token == None):
         args.api_token = ""
 
-    if(mode == "download"):
+    if(mode == "list"):
+        readDictFromFile(args.wordbank_dir)
+        print(word_bank)
+    elif(mode == "download"):
         if(args.api_token == ""):
             print("GENERATE API CLIENT TOKEN FROM https://genius.com/api-clients OR YOU WILL HAVE A BAD TIME")
             print("pass via --api_token. Run ./lyricHelper for more options")
