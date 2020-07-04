@@ -145,7 +145,10 @@ def writeSong(baseSong):
                 best_rhymes = sorted(rhyme_rating.items(), key=lambda x: x[1], reverse=True)
                 if(int(best_rhymes[0][1]) != 0):
                     rhyme_end = best_rhymes[0][0]
-            new_sentance += " " + rhyme_end
+            split_sentace = new_sentance.split(" ")
+            split_sentace[-1] = rhyme_end
+            split_sentace = [x for x in split_sentace if x != " "]
+            new_sentance = ' '.join(split_sentace)
             print(new_sentance)
             lastLastLine = lastLine
             lastLine = new_sentance.strip()
@@ -174,8 +177,8 @@ if __name__ == "__main__":
     parser.add_argument('--download_dir', help='Where to place/find downloaded songs, defaults to lyrics/')
     parser.add_argument('--wordbank_dir', help='Where to place/find learned words, defaults to word_bank.json')
     parser.add_argument('--base_song', help='Song to be used for reference in writing. Chooses at random from --download_dir if not defined')
-    parser.add_argument('--rhyme', help='Try to generate ryhmes in the song. Will take slightly longer')
-    parser.add_argument('--proper', help='Try to do things like You\'ll and I\'m')
+    parser.add_argument('--rhyme', help='Try to generate ryhmes in the song. Will take slightly longer', action='store_true')
+    parser.add_argument('--proper', help='Try to do things like You\'ll and I\'m', action='store_true')
     args = parser.parse_args()
 
     mode = args.mode.lower()
