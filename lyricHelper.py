@@ -13,12 +13,14 @@ import json
 
 nlp = spacy.load("en_core_web_sm")
 word_bank = dict()
+rhyme_list = None
 
 download_list = "downloadList.txt"
 download_dir = "lyrics"
 wordbank_dir = "word_bank.gar"
 api_token = ""
 base_song = ""
+proper = False
 
 def getSongFromWeb(search_term):
     _URL_API = "https://api.genius.com/"
@@ -76,6 +78,23 @@ def writeSongRaw(baseSong):
     return return_str
                 
 
+def getAllWords(d,depth=0):
+    finalList = []
+    if(isinstance(d, dict)):
+        for key in d.keys():
+            finalList = finalList + getAllWords(d[key],depth+1)
+        return finalList
+    else:
+        return d
+
+def getRhymeRating(word1, word2, rating=1):
+    if(word1 == word2):
+        return len(word1)
+    if(word1[-rating:] == word2[-rating:]):
+        return getRhymeRating(word1,word2,rating+1)
+    else:
+        return rating-1
+
 def writeSong(baseSong):
     if(baseSong == ""):
         songs_to_learn = glob.glob(download_dir + "/*")
@@ -84,9 +103,12 @@ def writeSong(baseSong):
     print("BASED ON: " + baseSong)
     print()
     written_lyrics = dict()
+    lastLine = ""
+    lastLastLine = ""
     with open(baseSong) as file:
         for line in file:
             sentance = line.strip()
+            new_sentance = ""
             doc = nlp(sentance)
             for token in doc:
                 sub = token.text
@@ -98,8 +120,10 @@ def writeSong(baseSong):
                         sub = possible_subs[sub_idx]
                     #punctuation is hard
                     if "'" in sub:
-                        start_offset = ""
-                        #sub = token.text
+                        if(proper):
+                            start_offset = ""
+                        else:
+                            sub = ""
                     if "," in token.text or  '"' in token.text:
                         start_offset = ""
                     #if a line is repeated in a song I wanted it to be repeated here too
@@ -109,8 +133,22 @@ def writeSong(baseSong):
                         written_lyrics[token.text] = sub
                     
                     sub = sub.lower()
-                print(start_offset  + sub.replace("-", " "), end="")
-            print()
+                new_sentance += start_offset  + sub.replace("-", " ")
+            #look for rhymes at the end
+            rhyme_end = ""
+            if(rhyme_list is not None and getRhymeRating(lastLastLine, lastLine) == 0):
+                rhyme_rating = dict()
+                for pot_sub in rhyme_list:
+                    if(lastLine[-len(pot_sub):] != pot_sub):
+                        rating = getRhymeRating(pot_sub, lastLine)
+                        rhyme_rating[pot_sub] = rating
+                best_rhymes = sorted(rhyme_rating.items(), key=lambda x: x[1], reverse=True)
+                if(int(best_rhymes[0][1]) != 0):
+                    rhyme_end = best_rhymes[0][0]
+            new_sentance += " " + rhyme_end
+            print(new_sentance)
+            lastLastLine = lastLine
+            lastLine = new_sentance.strip()
 
 def writeDictToFile(filename):
     with open(filename, 'wb') as outfile:
@@ -121,6 +159,12 @@ def readDictFromFile(filename):
     with open(filename, 'rb') as infile:
         word_bank = pickle.load(infile)
 
+def getWordList():
+    songs_to_learn = glob.glob(download_dir + "/*")
+    learnWords(songs_to_learn)
+    allwords = getAllWords(word_bank)
+    lowers = [x.lower() for x in allwords]
+    return list(dict.fromkeys(lowers))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -130,6 +174,8 @@ if __name__ == "__main__":
     parser.add_argument('--download_dir', help='Where to place/find downloaded songs, defaults to lyrics/')
     parser.add_argument('--wordbank_dir', help='Where to place/find learned words, defaults to word_bank.json')
     parser.add_argument('--base_song', help='Song to be used for reference in writing. Chooses at random from --download_dir if not defined')
+    parser.add_argument('--rhyme', help='Try to generate ryhmes in the song. Will take slightly longer')
+    parser.add_argument('--proper', help='Try to do things like You\'ll and I\'m')
     args = parser.parse_args()
 
     mode = args.mode.lower()
@@ -143,6 +189,10 @@ if __name__ == "__main__":
         base_song = args.base_song
     if(args.api_token != None):
         api_token = args.api_token
+    if(args.rhyme != None):
+        rhyme_list = getWordList()
+    if(args.proper != None):
+        proper = True
 
     if(mode == "list"):
         readDictFromFile(wordbank_dir)
