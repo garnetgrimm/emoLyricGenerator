@@ -4,14 +4,6 @@ import random
 import glob
 
 import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument('mode', help='The operating modes for lyricHelper are: download, list, train, write')
-parser.add_argument('--api_token', help='API key for genius lyrics, used only in download mode ( https://genius.com/api-clients )')
-parser.add_argument('--download_list', help='Location of song download list, defaults to downloadList.txt')
-parser.add_argument('--download_dir', help='Where to place/find downloaded songs, defaults to lyrics/')
-parser.add_argument('--wordbank_dir', help='Where to place/find learned words, defaults to word_bank.json')
-parser.add_argument('--base_song', help='Song to be used for reference in writing. Chooses at random from --download_dir if not defined')
-args = parser.parse_args()
 import pickle
 
 from bs4 import BeautifulSoup
@@ -19,17 +11,21 @@ import requests
 import urllib.request as urllib2
 import json
 
-
 nlp = spacy.load("en_core_web_sm")
-
 word_bank = dict()
+
+download_list = "downloadList.txt"
+download_dir = "lyrics"
+wordbank_dir = "word_bank.gar"
+api_token = ""
+base_song = ""
 
 def getSongFromWeb(search_term):
     _URL_API = "https://api.genius.com/"
     _URL_SEARCH = "search?q="
     querystring = _URL_API + _URL_SEARCH + urllib2.quote(search_term)
     request = urllib2.Request(querystring)
-    client_access_token = args.api_token
+    client_access_token = api_token
     request.add_header("Authorization", "Bearer " + client_access_token)
     request.add_header("User-Agent", "")
     response = urllib2.urlopen(request, timeout=3)
@@ -42,7 +38,7 @@ def getSongFromWeb(search_term):
     song_info = json_obj['response']['hits'][0]['result']
     song_title = song_info['title'].lower().replace(" ", "-")
     song_artist = song_info['primary_artist']['name'].lower().replace(" ", "-")
-    with open(args.download_dir + '/' + song_artist + "." + song_title, 'w') as file:
+    with open(download_dir + '/' + song_artist + "." + song_title, 'w') as file:
         file.write(lyrics)
 
 def learnWords(files):
@@ -61,7 +57,30 @@ def learnWords(files):
                        word_bank[token.tag_][token.dep_] = []
                     word_bank[token.tag_][token.dep_].append(token.text.lower())
 
+def writeSongRaw(baseSong):
+    if(baseSong == ""):
+        songs_to_learn = glob.glob(download_dir + "/*")
+        song_idx = random.randrange(len(songs_to_learn))
+        baseSong = songs_to_learn[song_idx]
+    return_str = []
+    return_str.append(baseSong)
+    written_lyrics = dict()
+    with open(baseSong) as file:
+        for line in file:
+            sentance = line.strip()
+            doc = nlp(sentance)
+            new_sentance = ""
+            for token in doc:
+                new_sentance += (token.tag_ + "." + token.dep_ + " ")
+            return_str.append(new_sentance)
+    return return_str
+                
+
 def writeSong(baseSong):
+    if(baseSong == ""):
+        songs_to_learn = glob.glob(download_dir + "/*")
+        song_idx = random.randrange(len(songs_to_learn))
+        baseSong = songs_to_learn[song_idx]
     print("BASED ON: " + baseSong)
     print()
     written_lyrics = dict()
@@ -102,38 +121,46 @@ def readDictFromFile(filename):
     with open(filename, 'rb') as infile:
         word_bank = pickle.load(infile)
 
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('mode', help='The operating modes for lyricHelper are: download, list, train, write')
+    parser.add_argument('--api_token', help='API key for genius lyrics, used only in download mode ( https://genius.com/api-clients )')
+    parser.add_argument('--download_list', help='Location of song download list, defaults to downloadList.txt')
+    parser.add_argument('--download_dir', help='Where to place/find downloaded songs, defaults to lyrics/')
+    parser.add_argument('--wordbank_dir', help='Where to place/find learned words, defaults to word_bank.json')
+    parser.add_argument('--base_song', help='Song to be used for reference in writing. Chooses at random from --download_dir if not defined')
+    args = parser.parse_args()
+
     mode = args.mode.lower()
-    if(args.download_list == None):
-        args.download_list = "downloadList.txt"
-    if(args.download_dir == None):
-        args.download_dir = "lyrics"
-    if(args.wordbank_dir == None):
-        args.wordbank_dir = "word_bank.gar"
-    if(args.base_song == None):
-        songs_to_learn = glob.glob(args.download_dir + "/*")
-        song_idx = random.randrange(len(songs_to_learn))
-        args.base_song = songs_to_learn[song_idx]
-    if(args.api_token == None):
-        args.api_token = ""
+    if(args.download_list != None):
+        download_list = args.download_list
+    if(args.download_dir != None):
+        download_dir = args.download_dir
+    if(args.wordbank_dir != None):
+        wordbank_dir = args.wordbank_dir
+    if(args.base_song != None):
+        base_song = args.base_song
+    if(args.api_token != None):
+        api_token = args.api_token
 
     if(mode == "list"):
-        readDictFromFile(args.wordbank_dir)
+        readDictFromFile(wordbank_dir)
         print(word_bank)
     elif(mode == "download"):
-        if(args.api_token == ""):
+        if(api_token == ""):
             print("GENERATE API CLIENT TOKEN FROM https://genius.com/api-clients OR YOU WILL HAVE A BAD TIME")
             print("pass via --api_token. Run ./lyricHelper for more options")
             exit()
         else:
-            print("api_token: " + args.api_token)
-        with open(args.download_list) as file:
+            print("api_token: " + api_token)
+        with open(download_list) as file:
             for song in file:
                 getSongFromWeb(song)
     elif(mode == "train"):
-        songs_to_learn = glob.glob(args.download_dir + "/*")
+        songs_to_learn = glob.glob(download_dir + "/*")
         learnWords(songs_to_learn)
-        writeDictToFile(args.wordbank_dir)
+        writeDictToFile(wordbank_dir)
     elif(mode == "write"):
-        readDictFromFile(args.wordbank_dir)
-        writeSong(args.base_song)
+        readDictFromFile(wordbank_dir)
+        writeSong(base_song)
