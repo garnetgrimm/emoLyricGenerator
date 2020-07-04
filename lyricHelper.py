@@ -48,9 +48,9 @@ def learnWords(files):
                 sentance = line.strip()
                 doc = nlp(sentance)
                 for i in range(0, len(doc)):
+                    token = doc[i]
                     if(token.text.strip().lower() == "chorus" or token.text.strip().lower() == "verse"):
                         continue
-                    token = doc[i]
                     if token.tag_ not in word_bank.keys():
                         word_bank[token.tag_] = dict()
                     if token.dep_ not in word_bank[token.tag_].keys():
