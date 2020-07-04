@@ -1,54 +1,50 @@
 import tkinter as tk
+import tkinter.ttk as ttk
 import lyricHelper
+import random
+from functools import partial
 
 lyricHelper.readDictFromFile(lyricHelper.wordbank_dir)
 song = lyricHelper.writeSongRaw("")
 songLine = 1
 songPos = 0
+buttons = []
+activeRow = 0
+activeCol = 0
 
-def setButtons():
-    global songLine
-    global songPos
+def setButtons(row,col,word_type):
     global listbox
+    global button1
+    global activeRow
+    global activeCol
 
-    line = song[songLine].split()
-    while(len(line) < 1):
-        text2.insert(tk.END, "\n")
-        songLine +=1
-        line = song[songLine].split()
+    activeRow = row
+    activeCol = col
 
-    songPos += 1
-    if(songPos >= len(line)):
-        text2.insert(tk.END, "\n")
-        songLine += 1
-        songPos = 0
+    curr_word = word_type.split(".")
+    tag = curr_word[0]
+    dep = curr_word[1]
 
-    tag = line[songPos].split(".")
-    
     listbox.delete(0, tk.END)
     listbox.insert(tk.END, "Skip")
     listbox.insert(tk.END, "New Line")
-    mylist = list(dict.fromkeys(lyricHelper.word_bank[tag[0]][tag[1]]))
+    lowers = [x.lower() for x in lyricHelper.word_bank[tag][dep]]
+    mylist = list(dict.fromkeys(lowers))
     for index in range(len(mylist)):
         possible_sub = mylist[index]
         listbox.insert(tk.END, possible_sub)
 
+def save():
+    with open("song.txt", "w") as file:
+        for y in range(0, len(buttons)):
+            for x in range(0, len(buttons[y])):
+                file.write(buttons[y][x].cget('text') + " ")
+            file.write("\n")
+
+
 def setTextInput(event=""):
-    global text2
-    global songLine
-    global songPos
-    text2.configure(state='normal')
     text = listbox.get(tk.ACTIVE)
-    if(text == "New Line"):
-        songLine += 1
-        songPos = 0
-        text2.insert(tk.END, "\n")
-    elif(text == "Skip"):
-        text2.insert(tk.END, " ")
-    else:
-        text2.insert(tk.END, text + " ")
-    text2.configure(state='disabled')
-    setButtons()
+    buttons[activeCol][activeRow].config(text=text)
 
 def on_configure(event):
     global canvas
@@ -56,7 +52,11 @@ def on_configure(event):
 
 
 root = tk.Tk()
-root.geometry("640x480")
+root.geometry("800x800")
+
+ttk.Label(root, text=song[0]).pack(side=tk.BOTTOM)
+tk.Button(root, text ="Save", command=save).pack(side=tk.BOTTOM)
+tk.Button(root, text ="Select", command=setTextInput).pack(side=tk.BOTTOM)
 
 bottomframe = tk.Frame(root)
 bottomframe.pack(side = tk.LEFT, fill=tk.Y)
@@ -64,24 +64,42 @@ scrollbar = tk.Scrollbar(bottomframe)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 listbox = tk.Listbox(bottomframe)
 listbox.pack(side=tk.LEFT, fill=tk.Y)
-button1 = tk.Button(root, text ="Select", command = setTextInput)
-button1.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
 listbox.config(yscrollcommand=scrollbar.set)
 scrollbar.config(command=listbox.yview)
 
 root.bind('<Return>', setTextInput)
 
-scroll = tk.Scrollbar(root)
-text2 = tk.Text(root, height=20, width=70)
-text2.configure(yscrollcommand=scroll.set)
-text2.tag_configure('bold_italics', font=('Arial', 12, 'bold', 'italic'))
-text2.tag_configure('big', font=('Verdana', 20, 'bold'))
-text2.tag_configure('color',foreground='#476042',font=('Tempus Sans ITC', 12, 'bold'))
-text2.pack(side=tk.LEFT)
-scroll.pack(side=tk.RIGHT, fill=tk.Y)
-
-text2.insert(tk.END, "BASED ON: " + song[0] + "\n")
-
-setButtons()
+style = ttk.Style()
+style.configure('W.TButton', font = ('calibri', 5, 'bold', 'underline'), foreground = 'red') 
+container = ttk.Frame(root)
+canvas = tk.Canvas(container, height=700)
+scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+scrollable_frame = ttk.Frame(canvas)
+scrollable_frame.bind(
+    "<Configure>",
+    lambda e: canvas.configure(
+        scrollregion=canvas.bbox("all")
+    )
+)
+canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+canvas.configure(yscrollcommand=scrollbar.set)
+for c in range(0, len(song)):
+    buttons.append([])
+    for r in range(0, len(song[c].split())):
+        buttons[c].append([])
+        curr_word = song[c].split()[r].split(".")
+        tag = curr_word[0]
+        dep = curr_word[1]
+        sub = ""
+        if tag in lyricHelper.word_bank.keys():
+            if dep in lyricHelper.word_bank[tag].keys():
+                possible_subs = lyricHelper.word_bank[tag][dep]
+                sub_idx = random.randrange(len(possible_subs))
+                sub = possible_subs[sub_idx]
+        buttons[c][r] = ttk.Button(scrollable_frame, text=sub, style='W.TButton', command=partial(setButtons,r,c,song[c].split()[r]))
+        buttons[c][r].grid(row=c, column=r, pady=0, padx=0)
+container.pack(fill=tk.BOTH)
+canvas.pack(side="left", fill=tk.BOTH, expand=True)
+scrollbar.pack(side="right", fill="y")
 
 root.mainloop()
