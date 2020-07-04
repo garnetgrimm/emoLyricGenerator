@@ -26,8 +26,6 @@ def setButtons(row,col,word_type):
     dep = curr_word[1]
 
     listbox.delete(0, tk.END)
-    listbox.insert(tk.END, "Skip")
-    listbox.insert(tk.END, "New Line")
     lowers = [x.lower() for x in lyricHelper.word_bank[tag][dep]]
     mylist = list(dict.fromkeys(lowers))
     for index in range(len(mylist)):
@@ -70,7 +68,7 @@ scrollbar.config(command=listbox.yview)
 root.bind('<Return>', setTextInput)
 
 style = ttk.Style()
-style.configure('W.TButton', font = ('calibri', 5, 'bold', 'underline'), foreground = 'red') 
+style.configure('W.TButton', font = ('calibri', 5, 'bold'), foreground = 'black') 
 container = ttk.Frame(root)
 canvas = tk.Canvas(container, height=700)
 scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
@@ -95,7 +93,7 @@ for c in range(0, len(song)):
             if dep in lyricHelper.word_bank[tag].keys():
                 possible_subs = lyricHelper.word_bank[tag][dep]
                 sub_idx = random.randrange(len(possible_subs))
-                sub = possible_subs[sub_idx]
+                sub = possible_subs[sub_idx].lower()
         buttons[c][r] = ttk.Button(scrollable_frame, text=sub, style='W.TButton', command=partial(setButtons,r,c,song[c].split()[r]))
         buttons[c][r].grid(row=c, column=r, pady=0, padx=0)
 container.pack(fill=tk.BOTH)
