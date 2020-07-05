@@ -22,6 +22,19 @@ api_token = ""
 base_song = ""
 proper = False
 
+contraction_list = dict()
+rev_contraction_list = dict()
+
+def getContractions():
+    global contraction_list
+    with open("contractions.txt") as file:
+        for line in file:
+            parts = line.split(" = ")
+            seperated_word = parts[1]
+            cont_word = parts[0]
+            contraction_list[cont_word] = seperated_word_list
+            rev_contraction_list[seperated_word] = cont_word
+
 def getSongFromWeb(search_term):
     _URL_API = "https://api.genius.com/"
     _URL_SEARCH = "search?q="
@@ -44,11 +57,18 @@ def getSongFromWeb(search_term):
         file.write(lyrics)
 
 def learnWords(files):
+    getContractions()
     for file_name in files:
         with open(file_name) as file:
             for line in file:
-                sentance = line.strip()
-                doc = nlp(sentance)
+                easier_sentance = ""
+                for word in line.split(" "):
+                    cleaned_word = word.lower().strip()
+                    if(cleaned_word in contraction_list):
+                        easier_sentance += contraction_list[cleaned_word] + " "
+                    else:
+                        easier_sentance += cleaned_word + " "
+                doc = nlp(easier_sentance)
                 for i in range(0, len(doc)):
                     token = doc[i]
                     if(token.text.strip().lower() == "chorus" or token.text.strip().lower() == "verse"):
@@ -131,7 +151,6 @@ def writeSong(baseSong):
                         sub = written_lyrics[token.text]
                     else:
                         written_lyrics[token.text] = sub
-                    
                     sub = sub.lower()
                 new_sentance += start_offset  + sub.replace("-", " ")
             #look for rhymes at the end
@@ -149,6 +168,8 @@ def writeSong(baseSong):
             split_sentace[-1] = rhyme_end
             split_sentace = [x for x in split_sentace if x != " "]
             new_sentance = ' '.join(split_sentace)
+            #check for contractions
+
             print(new_sentance)
             lastLastLine = lastLine
             lastLine = new_sentance.strip()
