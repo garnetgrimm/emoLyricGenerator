@@ -16,8 +16,6 @@ akes
 ape
 apes
 arch
-are
-ares
 arm
 arms
 ate
@@ -69,7 +67,6 @@ bead
 beads
 beak
 beaks
-been
 beep
 beeps
 beg
@@ -523,7 +520,6 @@ coignes
 coil
 coils
 coin
-coins
 comp
 comps
 compt
@@ -546,7 +542,6 @@ cosh
 cote
 cotes
 couch
-could
 course
 coursed
 cove
@@ -684,8 +679,6 @@ dials
 dib
 dibs
 dice
-did
-didst
 die
 dies
 dig
@@ -1204,7 +1197,6 @@ gore
 gores
 gorge
 gorged
-got
 gouge
 gown
 gowns
@@ -1713,7 +1705,7 @@ mauls
 maun
 mayst
 maze
-meant
+mean
 meet
 meets
 meld
@@ -1852,6 +1844,7 @@ noise
 noose
 nose
 nosh
+not
 notch
 nudge
 nuke
@@ -3512,7 +3505,6 @@ warn
 warns
 warp
 warps
-was
 waste
 wastes
 waught
@@ -3549,7 +3541,6 @@ welts
 wench
 went
 wept
-were
 wert
 whack
 whacks

@@ -27,12 +27,12 @@ rev_contraction_list = dict()
 
 def getContractions():
     global contraction_list
-    with open("contractions.txt") as file:
+    with open("partsOfSpeech/contractions.txt") as file:
         for line in file:
             parts = line.split(" = ")
             seperated_word = parts[1]
             cont_word = parts[0]
-            contraction_list[cont_word] = seperated_word_list
+            contraction_list[cont_word] = seperated_word
             rev_contraction_list[seperated_word] = cont_word
 
 def getSongFromWeb(search_term):

@@ -1,3 +1,4 @@
+fuck
 abb
 abbs
 ace
@@ -14,7 +15,6 @@ ails
 aim
 aims
 ain
-ain't
 airs
 airt
 airts
@@ -42,8 +42,6 @@ alum
 alums
 amp
 amps
-and
-ands
 ane
 anes
 angst
@@ -57,9 +55,6 @@ apes
 apse
 arch
 arcs
-are
-aren't
-ares
 ark
 arks
 arm
