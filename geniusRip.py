@@ -4,6 +4,7 @@ import urllib.request as urllib2
 import json
 
 import argparse
+import re
 
 def getSongsFromWeb(download_list, api_token, download_dir):
     with open(download_list) as file:
@@ -11,7 +12,11 @@ def getSongsFromWeb(download_list, api_token, download_dir):
             getSongFromWeb(song.strip(), api_token, download_dir)
 
 def getSongFromWeb(search_term, api_token, download_dir):
-    print("downloading:", search_term, end="")
+    if(search_term[0] == "#"):
+        print("skipping:", search_term)
+        return
+    else:
+        print("downloading:", search_term, end="")
     _URL_API = "https://api.genius.com/"
     _URL_SEARCH = "search?q="
     querystring = _URL_API + _URL_SEARCH + urllib2.quote(search_term)
@@ -28,13 +33,15 @@ def getSongFromWeb(search_term, api_token, download_dir):
     html = BeautifulSoup(page.text, "html.parser")
     lyrics = html.find("div", class_="lyrics").get_text()
     song_info = json_obj['response']['hits'][0]['result']
-    song_title = song_info['title'].lower().replace(" ", "-")
-    song_artist = song_info['primary_artist']['name'].lower().replace(" ", "-")
+    song_title = re.sub(r'[^A-Za-z]', '', song_info['title']).lower()
+    song_artist = re.sub(r'[^A-Za-z]', '', song_info['primary_artist']['name']).lower()
     print(".",end="")
-    with open(download_dir + '/' + song_artist + "." + song_title, 'w') as file:
-        file.write(lyrics)
+    fn = download_dir + '/' + song_artist + "." + song_title 
+    with open(fn, 'w') as file:
+        lyrics = lyrics.replace('-',"").replace('.',"").replace('"',"").replace(',',"").replace('\\',"").replace('/',"").replace("“","").replace("?","").replace("!","").replace(":","").lower()
+        file.write(lyrics.lower())
     print(".",end="")
-    print("done!")
+    print("done! (", fn, ")")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -3,7 +3,8 @@ import markovify
 
 combined_model = None
 for (dirpath, _, filenames) in os.walk("lyrics"):
-    for filename in filenames:
+    for filename in filenames: 
+        #print(filename)
         with open(os.path.join(dirpath, filename)) as f:
             model = markovify.Text(f, retain_original=False)
             if combined_model:
@@ -13,4 +14,4 @@ for (dirpath, _, filenames) in os.walk("lyrics"):
 
 # Print three randomly-generated sentences of no more than 280 characters
 for i in range(15):
-    print(combined_model.make_short_sentence(1080))
+    print(combined_model.make_sentence())
